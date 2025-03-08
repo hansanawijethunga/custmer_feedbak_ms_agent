@@ -2,10 +2,13 @@ from flask import Flask, request, jsonify
 from pydantic import BaseModel
 from openai import OpenAI
 import os
+import prompt
+import json
 
 # Set your OpenAI API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Replace with your actual API key
 
+print("OK")
 print(OPENAI_API_KEY)
 
 # Initialize Flask app
@@ -19,9 +22,9 @@ class QueryRequest(BaseModel):
 
 @app.route("/chat", methods=["POST"])
 def chat_with_ai():
-    """
-    API endpoint to send a prompt to OpenAI's API and return the response.
-    """
+
+
+
     try:
         request_data = request.get_json()
         query = QueryRequest(**request_data)
@@ -29,17 +32,20 @@ def chat_with_ai():
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You a cutomer "},
+                {"role": "system", "content": prompt.PROMPT},
                 {
                     "role": "user",
                     "content": query.prompt
                 }
-            ]
+            ],
+            response_format={
+                "type": "json_object"
+            },
         )
-        print(response.choices[0].message)
-        return jsonify({"response": response.choices[0].message.content})
-        # print()
-        # return query.prompt
+        # print(response)
+        data = json.loads(response.choices[0].message.content)
+        print(type(data))
+        return jsonify(data)
 
     except Exception as e:
         print(e)
@@ -50,6 +56,10 @@ def chat_with_ai():
 @app.route("/", methods=["GET"])
 def root():
     return jsonify({"message": "OpenAI Chat API is running!"})
+
+
+
+
 
 
 if __name__ == "__main__":
