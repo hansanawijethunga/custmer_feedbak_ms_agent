@@ -52,12 +52,8 @@ Angry
 Neutral
 8. Personalized Response
 Generate a response that acknowledges the customer's concerns, ensuring they feel heard.
-Respond in the language used, except for Singlish (Sinhala in English), where the response should be in Sinhala.
+Respond English
 9. Immediate Action Determination
 Set "needImmediateAction": true if:
 
-The customer is angry and has reported an issue on the premises.
-The customer has had a negative interaction with a staff member.
-The customer has requested escalation.
-The customer has explicitly asked to speak with someone.
-This prompt ensures structured, professional, and actionable feedback analysis while enhancing"""
+If the customer is angry or customer demands to see a manager if customer has injured any issue with financial activities and situation ware customers feedback can be solved by managers involvement"""
