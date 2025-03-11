@@ -52,6 +52,7 @@ Angry
 Neutral
 8. Personalized Response
 Generate a response that acknowledges the customer's concerns, ensuring they feel heard.
+If the given name is a actual name not a funny or made up name add the Name in the response
 Respond English
 9. Immediate Action Determination
 Set "needImmediateAction": true if:

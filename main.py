@@ -12,6 +12,7 @@ from googleapiclient.errors import HttpError
 from typing import List
 import uuid
 from datetime import datetime
+import traceback
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -52,23 +53,24 @@ def chat_with_ai():
         query = QueryRequest(**request_data)
         print(query)
         client = OpenAI()
-        # response = client.chat.completions.create(
-        #     model="gpt-4o-mini",
-        #     messages=[
-        #         {"role": "system", "content": prompt.PROMPT},
-        #         {
-        #             "role": "user",
-        #             "content": query.review
-        #         }
-        #     ],
-        #     response_format={
-        #         "type": "json_object"
-        #     },
-        # )
-        #
-        #
-        # data = json.loads(response.choices[0].message.content)
-        data = []
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": prompt.PROMPT},
+                {
+                    "role": "user",
+                    "content": query.review + " Feedback givers name is "+ query.name
+                }
+            ],
+            response_format={
+                "type": "json_object"
+            },
+        )
+
+
+        data = json.loads(response.choices[0].message.content)
+        # data = []
+        print(data)
         print(type(data))
         creds = None
         if os.path.exists("token.json"):
@@ -89,11 +91,11 @@ def chat_with_ai():
         try:
             feedback_sheet_range = 'FeedBack!A1'
             service = build("sheets", "v4", credentials=creds)
-            unique_id = uuid.uuid4()
+            unique_id = str(uuid.uuid4())
             print(unique_id)
             # sheet = service.spreadsheets()
             row = [
-                str(unique_id),
+                unique_id,
                 datetime.now().strftime("%Y"),
                 datetime.now().strftime("%m"),
                 query.overall_experience,
@@ -108,8 +110,17 @@ def chat_with_ai():
                 query.review,
                 query.name,
                 query.age,
-                query.referralSource
+                query.referralSource,
+                data["emotion"],
+                data["feedbackStory"],
+                data["intent"],
+                data["needImmediateAction"],
+                data["response"],
+                data["summary"],
+                data["title"],
+                data["translatedFeedback"]
                 ]
+
             command = service.spreadsheets().values().append(
                 spreadsheetId=SPREADSHEET_ID,
                 range=feedback_sheet_range,
@@ -117,17 +128,85 @@ def chat_with_ai():
                 insertDataOption="INSERT_ROWS",  # Optionally choose how to insert rows
                 body={"values": [row]}
             )
-
             # Execute the request
             response = command.execute()
+            companion_sheet_range = 'Companions!A1'
+            for item in query.companion:
+                row = [
+                    unique_id,
+                    item
+                ]
+                command = service.spreadsheets().values().append(
+                    spreadsheetId=SPREADSHEET_ID,
+                    range=companion_sheet_range,
+                    valueInputOption="RAW",  # Use "RAW" to input raw data, "USER_ENTERED" for Excel-like behavior
+                    insertDataOption="INSERT_ROWS",  # Optionally choose how to insert rows
+                    body={"values": [row]}
+                )
+                # Execute the request
+                response = command.execute()
+            #positive comments
+            positive_sheet_range = 'Positive!A1'
+            for item in data["positiveFeedback"]:
+                row = [
+                    unique_id,
+                    item
+                ]
+                command = service.spreadsheets().values().append(
+                    spreadsheetId=SPREADSHEET_ID,
+                    range=positive_sheet_range,
+                    valueInputOption="RAW",  # Use "RAW" to input raw data, "USER_ENTERED" for Excel-like behavior
+                    insertDataOption="INSERT_ROWS",  # Optionally choose how to insert rows
+                    body={"values": [row]}
+                )
+                # Execute the request
+                response = command.execute()
+
+            # negative comments
+            negative_sheet_range = 'Negative!A1'
+            for item in data["negativeFeedback"]:
+                row = [
+                    unique_id,
+                    item
+                ]
+                command = service.spreadsheets().values().append(
+                    spreadsheetId=SPREADSHEET_ID,
+                    range=negative_sheet_range,
+                    valueInputOption="RAW",  # Use "RAW" to input raw data, "USER_ENTERED" for Excel-like behavior
+                    insertDataOption="INSERT_ROWS",  # Optionally choose how to insert rows
+                    body={"values": [row]}
+                )
+                # Execute the request
+                response = command.execute()
+
+            # suggestions
+            suggestion_sheet_range = 'Suggestion!A1'
+            for item in data["suggestions"]:
+                row = [
+                    unique_id,
+                    item
+                ]
+                command = service.spreadsheets().values().append(
+                    spreadsheetId=SPREADSHEET_ID,
+                    range=suggestion_sheet_range,
+                    valueInputOption="RAW",  # Use "RAW" to input raw data, "USER_ENTERED" for Excel-like behavior
+                    insertDataOption="INSERT_ROWS",  # Optionally choose how to insert rows
+                    body={"values": [row]}
+                )
+                # Execute the request
+                response = command.execute()
+
             print(response)
         except Exception as e:
             print(e)
+            traceback.print_exc()
+            return jsonify({"error": str(e)}), 400
 
         return jsonify(data)
 
     except Exception as e:
         print(e)
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 400
 
 
