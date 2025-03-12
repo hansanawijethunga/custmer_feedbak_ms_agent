@@ -13,6 +13,9 @@ from typing import List
 import uuid
 from datetime import datetime
 import traceback
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -45,6 +48,7 @@ class QueryRequest(BaseModel):
     age : str
     companion : List[str]
     referralSource : str
+    email :str
 
 @app.route("/feedback", methods=["POST"])
 def chat_with_ai():
@@ -109,6 +113,7 @@ def chat_with_ai():
                 query.stay_again,
                 query.review,
                 query.name,
+                query.email,
                 query.age,
                 query.referralSource,
                 data["emotion"],
@@ -201,6 +206,25 @@ def chat_with_ai():
             print(e)
             traceback.print_exc()
             return jsonify({"error": str(e)}), 400
+#send email to manager
+        if data["needImmediateAction"]:
+            send_email(
+                subject="IMMEDIATE ACTION NEEDED",
+                name=query.name,
+                summary=data['summary'],
+                feedback=query.review,
+                emotion= data['emotion'],
+                intent = data['intent'],
+                recipient_email="rapidminds99@gmail.com"
+            )
+
+# send email to customer
+        if data["needImmediateAction"]:
+            send_email_customer(
+                subject="IMMEDIATE ACTION NEEDED",
+                body= data["response"],
+                recipient_email="rapidminds99@gmail.com"
+            )
 
         return jsonify(data)
 
@@ -216,7 +240,84 @@ def root():
     return jsonify({"message": "OpenAI Chat API is running!"})
 
 
+def send_email(subject, name,feedback,summary,emotion, intent, recipient_email):
+    try:
+        # Get email and app password from environment variables
+        sender_email = os.getenv('GMAIL_EMAIL')  # Email from environment variable
+        app_password = os.getenv('GMAIL_APP_PASSWORD')  # App Password from environment variable
 
+        if not sender_email or not app_password:
+            raise ValueError("Gmail email or app password not set in environment variables.")
+
+        # Set up the SMTP server
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+
+        # Create a MIME email
+        msg = MIMEMultipart()
+        msg["From"] = sender_email
+        msg["To"] = recipient_email
+        msg["Subject"] = subject
+
+        # Formatting the email body to be cleaner and more readable
+        email_body = f"""
+        Dear Team,
+
+        Please attend to the following customer request as soon as possible.
+
+        Customer Name: {name}
+        Customer is {emotion} and He wants to {intent}
+        Request Summary: {summary}
+        Original Feedback: {feedback}
+
+        Regards,
+        Your AI Assistance
+        """
+
+        # Attach the formatted email body
+        msg.attach(MIMEText(email_body, "plain"))
+
+        # Connect to Gmail's SMTP server and send email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, app_password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Error: {e}")
+
+
+
+def send_email_customer(subject, body, recipient_email):
+    try:
+        # Get email and app password from environment variables
+        sender_email = os.getenv('GMAIL_EMAIL')  # Email from environment variable
+        app_password = os.getenv('GMAIL_APP_PASSWORD')  # App Password from environment variable
+
+        if not sender_email or not app_password:
+            raise ValueError("Gmail email or app password not set in environment variables.")
+
+        # Set up the SMTP server
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+
+        # Create a MIME email
+        msg = MIMEMultipart()
+        msg["From"] = sender_email
+        msg["To"] = recipient_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "plain"))
+
+        # Connect to Gmail's SMTP server and send email
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()  # Secure the connection
+            server.login(sender_email, app_password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Error: {e}")
 
 
 

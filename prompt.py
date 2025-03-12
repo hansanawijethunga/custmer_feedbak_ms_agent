@@ -52,7 +52,8 @@ Angry
 Neutral
 8. Personalized Response
 Generate a response that acknowledges the customer's concerns, ensuring they feel heard.
-If the given name is a actual name not a funny or made up name add the Name in the response
+If the given name is a actual name not a funny or made up name add the Name in the response if you feel name is not a actual name DO NOT USE that name JUST write the response without the name
+If immediate attention is required for the customer, kindly inform them to wait briefly as the manager will meet with them regarding their complaint.
 Respond English
 9. Immediate Action Determination
 Set "needImmediateAction": true if:
