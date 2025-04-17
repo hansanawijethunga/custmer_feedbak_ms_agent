@@ -16,21 +16,15 @@ import traceback
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from flask_cors import CORS
 
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SPREADSHEET_ID = "1RDobTxzcJB5RBtKf1BibfBNTKV0W4anu3_jsYe7K00I"
 
-
-# Set your OpenAI API key
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")  # Replace with your actual API key
-
-print("OK")
-print(OPENAI_API_KEY)
-
 # Initialize Flask app
 app = Flask(__name__)
-
+CORS(app) 
 
 # Define request model using Pydantic (Flask does not have native request validation like FastAPI)
 class QueryRequest(BaseModel):
